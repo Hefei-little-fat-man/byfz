@@ -238,6 +238,13 @@
     <script src="js/supabase.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // 添加错误处理
+            if (typeof window.supabaseClient === 'undefined') {
+                console.error('Supabase客户端未正确初始化');
+                alert('系统初始化失败，请刷新页面重试');
+                return;
+            }
+
             const loginForm = document.getElementById('loginForm');
             const loginSection = document.getElementById('loginSection');
             const dataSection = document.getElementById('dataSection');
@@ -261,7 +268,7 @@
                 const username = document.getElementById('username').value;
                 const password = document.getElementById('password').value;
                 
-                // 简单的用户名密码验证（实际应用中应使用更安全的方式）
+                // 简单的用户名密码验证
                 if (username === 'admin' && password === 'fcj123') {
                     localStorage.setItem('adminLoggedIn', 'true');
                     showDataSection();
@@ -311,6 +318,11 @@
             
             async function loadData(searchTerm = '') {
                 try {
+                    // 添加安全检查
+                    if (typeof window.supabaseClient === 'undefined') {
+                        throw new Error('数据库连接未初始化');
+                    }
+                    
                     let query = window.supabaseClient
                         .from('registrations')
                         .select('*')
@@ -346,7 +358,7 @@
                                 <td>${item.community}</td>
                                 <td>${item.name}</td>
                                 <td>${item.phone}</td>
-								<td>${item.damage_part || ''}</td> <!-- 新增 -->
+                                <td>${item.damage_part || ''}</td>
                                 <td>${formattedDate}</td>
                             `;
                             
@@ -354,7 +366,7 @@
                         });
                     } else {
                         const row = document.createElement('tr');
-                        row.innerHTML = `<td colspan="7" style="text-align: center;">暂无数据</td>`;
+                        row.innerHTML = `<td colspan="8" style="text-align: center;">暂无数据</td>`;
                         dataBody.appendChild(row);
                     }
                 } catch (error) {
@@ -365,4 +377,5 @@
         });
     </script>
 </body>
+
 </html>
