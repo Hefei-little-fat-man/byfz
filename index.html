@@ -186,6 +186,19 @@
         }
     </style>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+	<script>
+	        // 替换为您的实际Supabase项目配置
+	        const SUPABASE_URL = 'https://gzaplxeswmvqclsuhofn.supabase.co'; // 替换为您的URL
+	        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd6YXBseGVzd212cWNsc3Vob2ZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAzODI2MjYsImV4cCI6MjA3NTk1ODYyNn0.LDvreiNKtaXOPI6MFg8CFXhS8vqQehBLdCWMCnrIQjY'; // 替换为您的匿名密钥
+	        
+	        // 初始化Supabase客户端
+	        try {
+	            window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+	            console.log('Supabase客户端初始化成功');
+	        } catch (error) {
+	            console.error('Supabase客户端初始化失败:', error);
+	        }
+	    </script>
 </head>
 <body>
     <div class="admin-container">
@@ -237,145 +250,144 @@
 
     <script src="js/supabase.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // 添加错误处理
-            if (typeof window.supabaseClient === 'undefined') {
-                console.error('Supabase客户端未正确初始化');
-                alert('系统初始化失败，请刷新页面重试');
-                return;
-            }
-
-            const loginForm = document.getElementById('loginForm');
-            const loginSection = document.getElementById('loginSection');
-            const dataSection = document.getElementById('dataSection');
-            const loginMessage = document.getElementById('loginMessage');
-            const logoutBtn = document.getElementById('logoutBtn');
-            const dataBody = document.getElementById('dataBody');
-            const searchInput = document.getElementById('searchInput');
-            const searchBtn = document.getElementById('searchBtn');
-            const resetBtn = document.getElementById('resetBtn');
-            
-            // 检查是否已登录
-            if (localStorage.getItem('adminLoggedIn') === 'true') {
-                showDataSection();
-                loadData();
-            }
-            
-            // 登录表单提交
-            loginForm.addEventListener('submit', function(e) {
-                e.preventDefault();
+            document.addEventListener('DOMContentLoaded', function() {
+                // 添加错误处理
+                if (typeof window.supabaseClient === 'undefined') {
+                    console.error('Supabase客户端未正确初始化');
+                    alert('系统初始化失败，请刷新页面重试');
+                    return;
+                }
+    
+                const loginForm = document.getElementById('loginForm');
+                const loginSection = document.getElementById('loginSection');
+                const dataSection = document.getElementById('dataSection');
+                const loginMessage = document.getElementById('loginMessage');
+                const logoutBtn = document.getElementById('logoutBtn');
+                const dataBody = document.getElementById('dataBody');
+                const searchInput = document.getElementById('searchInput');
+                const searchBtn = document.getElementById('searchBtn');
+                const resetBtn = document.getElementById('resetBtn');
                 
-                const username = document.getElementById('username').value;
-                const password = document.getElementById('password').value;
-                
-                // 简单的用户名密码验证
-                if (username === 'admin' && password === 'fcj123') {
-                    localStorage.setItem('adminLoggedIn', 'true');
+                // 检查是否已登录
+                if (localStorage.getItem('adminLoggedIn') === 'true') {
                     showDataSection();
                     loadData();
-                } else {
-                    showLoginMessage('用户名或密码错误', 'error');
                 }
-            });
-            
-            // 退出登录
-            logoutBtn.addEventListener('click', function() {
-                localStorage.removeItem('adminLoggedIn');
-                showLoginSection();
-            });
-            
-            // 搜索功能
-            searchBtn.addEventListener('click', function() {
-                const searchTerm = searchInput.value.trim();
-                loadData(searchTerm);
-            });
-            
-            // 重置搜索
-            resetBtn.addEventListener('click', function() {
-                searchInput.value = '';
-                loadData();
-            });
-            
-            function showLoginSection() {
-                loginSection.style.display = 'block';
-                dataSection.style.display = 'none';
-            }
-            
-            function showDataSection() {
-                loginSection.style.display = 'none';
-                dataSection.style.display = 'block';
-            }
-            
-            function showLoginMessage(text, type) {
-                loginMessage.textContent = text;
-                loginMessage.className = 'message ' + type;
-                loginMessage.style.display = 'block';
                 
-                setTimeout(() => {
-                    loginMessage.style.display = 'none';
-                }, 3000);
-            }
-            
-            async function loadData(searchTerm = '') {
-                try {
-                    // 添加安全检查
-                    if (typeof window.supabaseClient === 'undefined') {
-                        throw new Error('数据库连接未初始化');
-                    }
+                // 登录表单提交
+                loginForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
                     
-                    let query = window.supabaseClient
-                        .from('registrations')
-                        .select('*')
-                        .order('created_at', { ascending: false });
+                    const username = document.getElementById('username').value;
+                    const password = document.getElementById('password').value;
                     
-                    // 如果有搜索词，添加搜索条件
-                    if (searchTerm) {
-                        query = query.or(`name.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%,community.ilike.%${searchTerm}%,damage_part.ilike.%${searchTerm}%`);
-                    }
-                    
-                    const { data, error } = await query;
-                    
-                    if (error) {
-                        throw error;
-                    }
-                    
-                    // 清空表格
-                    dataBody.innerHTML = '';
-                    
-                    // 填充数据
-                    if (data && data.length > 0) {
-                        data.forEach(item => {
-                            const row = document.createElement('tr');
-                            
-                            // 格式化日期
-                            const date = new Date(item.created_at);
-                            const formattedDate = `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
-                            
-                            row.innerHTML = `
-                                <td>${item.id}</td>
-                                <td>${item.region}</td>
-                                <td>${item.road}</td>
-                                <td>${item.community}</td>
-                                <td>${item.name}</td>
-                                <td>${item.phone}</td>
-                                <td>${item.damage_part || ''}</td>
-                                <td>${formattedDate}</td>
-                            `;
-                            
-                            dataBody.appendChild(row);
-                        });
+                    // 简单的用户名密码验证
+                    if (username === 'admin' && password === 'fcj123') {
+                        localStorage.setItem('adminLoggedIn', 'true');
+                        showDataSection();
+                        loadData();
                     } else {
-                        const row = document.createElement('tr');
-                        row.innerHTML = `<td colspan="8" style="text-align: center;">暂无数据</td>`;
-                        dataBody.appendChild(row);
+                        showLoginMessage('用户名或密码错误', 'error');
                     }
-                } catch (error) {
-                    console.error('加载数据错误:', error);
-                    alert('加载数据失败: ' + error.message);
+                });
+                
+                // 退出登录
+                logoutBtn.addEventListener('click', function() {
+                    localStorage.removeItem('adminLoggedIn');
+                    showLoginSection();
+                });
+                
+                // 搜索功能
+                searchBtn.addEventListener('click', function() {
+                    const searchTerm = searchInput.value.trim();
+                    loadData(searchTerm);
+                });
+                
+                // 重置搜索
+                resetBtn.addEventListener('click', function() {
+                    searchInput.value = '';
+                    loadData();
+                });
+                
+                function showLoginSection() {
+                    loginSection.style.display = 'block';
+                    dataSection.style.display = 'none';
                 }
-            }
-        });
-    </script>
+                
+                function showDataSection() {
+                    loginSection.style.display = 'none';
+                    dataSection.style.display = 'block';
+                }
+                
+                function showLoginMessage(text, type) {
+                    loginMessage.textContent = text;
+                    loginMessage.className = 'message ' + type;
+                    loginMessage.style.display = 'block';
+                    
+                    setTimeout(() => {
+                        loginMessage.style.display = 'none';
+                    }, 3000);
+                }
+                
+                async function loadData(searchTerm = '') {
+                    try {
+                        // 添加安全检查
+                        if (typeof window.supabaseClient === 'undefined') {
+                            throw new Error('数据库连接未初始化');
+                        }
+                        
+                        let query = window.supabaseClient
+                            .from('registrations')
+                            .select('*')
+                            .order('created_at', { ascending: false });
+                        
+                        // 如果有搜索词，添加搜索条件
+                        if (searchTerm) {
+                            query = query.or(`name.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%,community.ilike.%${searchTerm}%,damage_part.ilike.%${searchTerm}%`);
+                        }
+                        
+                        const { data, error } = await query;
+                        
+                        if (error) {
+                            throw error;
+                        }
+                        
+                        // 清空表格
+                        dataBody.innerHTML = '';
+                        
+                        // 填充数据
+                        if (data && data.length > 0) {
+                            data.forEach(item => {
+                                const row = document.createElement('tr');
+                                
+                                // 格式化日期
+                                const date = new Date(item.created_at);
+                                const formattedDate = `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+                                
+                                row.innerHTML = `
+                                    <td>${item.id}</td>
+                                    <td>${item.region}</td>
+                                    <td>${item.road}</td>
+                                    <td>${item.community}</td>
+                                    <td>${item.name}</td>
+                                    <td>${item.phone}</td>
+                                    <td>${item.damage_part || ''}</td>
+                                    <td>${formattedDate}</td>
+                                `;
+                                
+                                dataBody.appendChild(row);
+                            });
+                        } else {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `<td colspan="8" style="text-align: center;">暂无数据</td>`;
+                            dataBody.appendChild(row);
+                        }
+                    } catch (error) {
+                        console.error('加载数据错误:', error);
+                        alert('加载数据失败: ' + error.message);
+                    }
+                }
+            });
+        </script>
 </body>
-
 </html>
